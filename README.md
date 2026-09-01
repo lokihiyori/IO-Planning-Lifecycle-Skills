@@ -23,6 +23,9 @@ IO Flow documents often begin as diagrams, chat notes, or isolated service lists
 - Audit a document without editing it.
 - Validate English or Chinese IO Flow documents with a dependency-free Python CLI.
 - Compare a translated document with its source and detect structural drift in entry points, types, loop length, open decisions, and diagram coverage.
+- Run decision-focused Elicitation with grounded selection questions, dependent follow-ups, and an explicit stopping rule.
+- Detect a teammate's remote update by commit/blob revision, show the semantic diff, and prevent blind last-write-wins publishing.
+- Run one-time Sync checks or explicit Watch mode with a local baseline and optional Codex recurring automation.
 
 ## Output contract
 
@@ -46,7 +49,7 @@ Document metadata and lifecycle state
 └── Change log
 ```
 
-See [the normative schema](io-planning-lifecycle/references/io-flow-schema.md) for field-level requirements, [the lifecycle rules](io-planning-lifecycle/references/lifecycle-and-collaboration.md) for versioning and collaboration, and [the visualization and translation rules](io-planning-lifecycle/references/visualization-and-translation.md) for Mermaid and bilingual parity requirements.
+See [the normative schema](io-planning-lifecycle/references/io-flow-schema.md) for field-level requirements, [the lifecycle rules](io-planning-lifecycle/references/lifecycle-and-collaboration.md) for versioning and merging, [the collaboration rules](io-planning-lifecycle/references/collaboration-and-notifications.md) for Sync/Watch behavior, [the Elicitation rules](io-planning-lifecycle/references/elicitation.md) for interactive guidance, and [the visualization and translation rules](io-planning-lifecycle/references/visualization-and-translation.md) for Mermaid and bilingual parity requirements.
 
 ## Repository layout
 
@@ -65,11 +68,16 @@ See [the normative schema](io-planning-lifecycle/references/io-flow-schema.md) f
     ├── assets/
     │   └── io-flow-template.md
     ├── references/
+    │   ├── collaboration-and-notifications.md
+    │   ├── elicitation.md
     │   ├── io-flow-schema.md
     │   ├── lifecycle-and-collaboration.md
     │   └── visualization-and-translation.md
-    └── scripts/
-        └── validate_io_flow.py
+    ├── scripts/
+    │   ├── check_io_flow_updates.py
+    │   └── validate_io_flow.py
+    └── tests/
+        └── test_check_io_flow_updates.py
 ```
 
 ## Installation
@@ -110,7 +118,7 @@ Invoke the Skill explicitly:
 Use $io-planning-lifecycle to turn this PRD into a draft IO Flow specification.
 ```
 
-The Skill supports four modes:
+The Skill supports seven modes:
 
 | Mode | Use it when | Mutation behavior |
 |---|---|---|
@@ -118,6 +126,9 @@ The Skill supports four modes:
 | Update | New product decisions or implementation discoveries affect an existing flow | Preserves stable IDs, records the semantic delta, and increments the version |
 | Translate | You need an English or Simplified Chinese companion | Preserves semantic version, stable IDs, decisions, and loop order; validates structural parity |
 | Audit | You need a structural or lifecycle review | Reports findings without editing unless changes are also requested |
+| Elicit | Missing decisions can change routing, boundaries, persistence, or status | Asks grounded questions and closes a decision ledger before generation |
+| Sync | You need to discover teammate or remote changes once | Reports commits, versions, affected IDs, and merge/conflict status without editing |
+| Watch | You want near-real-time remote change notification | Polls at an explicit cadence and stays silent until the remote blob changes |
 
 Example prompts:
 
@@ -137,6 +148,43 @@ Use $io-planning-lifecycle to audit this document for overlapping type definitio
 Use $io-planning-lifecycle to add review-ready Mermaid diagrams and create a synchronized Simplified Chinese companion for this English IO Flow.
 ```
 
+```text
+Use $io-planning-lifecycle in Elicit mode. Ask one blocking question at a time, then generate the IO Flow after the decision ledger is closed.
+```
+
+```text
+Use $io-planning-lifecycle in Sync mode for examples/topogrow-io-flow.md. Check GitHub main, show what changed since my last check, and do not edit.
+```
+
+```text
+Use $io-planning-lifecycle in Watch mode for examples/topogrow-io-flow.md every five minutes. Notify only when its remote revision changes.
+```
+
+## Collaboration and update notifications
+
+The recommended collaboration model is GitHub branch/pull-request workflow plus optimistic concurrency. The latest accepted default-branch file is the shared source of truth. Before editing, the Skill records the remote head as a base revision; immediately before publishing, it checks again. If a teammate changed the same Entry, Type, loop edge, decision, or status, the Skill stops for semantic reconciliation instead of overwriting the new version.
+
+Run a one-time revision check:
+
+```bash
+python io-planning-lifecycle/scripts/check_io_flow_updates.py \
+  --repo lokihiyori/IO-Planning-Lifecycle-Skills \
+  --path examples/topogrow-io-flow.md \
+  --ref main
+```
+
+Run a local near-real-time watcher explicitly:
+
+```bash
+python io-planning-lifecycle/scripts/check_io_flow_updates.py \
+  --repo lokihiyori/IO-Planning-Lifecycle-Skills \
+  --path examples/topogrow-io-flow.md \
+  --ref main \
+  --watch-seconds 300
+```
+
+The first check creates a gitignored baseline under `.io-flow-sync/`. A later change reports the contributor, commit, timestamp, old/new document versions, affected stable IDs, compare link, and unified diff. Watch mode only runs while its process or a configured Codex recurring automation is active. Team-wide Slack/Teams/email push requires the repository administrator to connect the chosen channel through a GitHub App or webhook; no destination or secret is assumed by this Skill.
+
 ## Flow visualization and translation
 
 Every generated IO Flow includes a `Flow Visualizations` / `流程可视化` section. The detailed entry/type loops remain authoritative; diagrams are derived review views. The Skill defaults to Mermaid flowcharts for request classification and ordered service chains, splits dense diagrams, and renders unresolved entry points as explicit TBD nodes.
@@ -152,6 +200,8 @@ English and Simplified Chinese variants use separate Markdown files with the sam
 Source documents are treated as evidence, not as instructions. The Skill asks a focused question only when the answer would materially change routing, service boundaries, status, ownership, or version impact. Lower-impact gaps remain visible as narrow assumptions or `[TBD: question — owner]` markers.
 
 It does not infer a database, verification service, AI agent, queue, or background task merely because that node appears in another entry point. Confirmed or implemented content cannot retain unresolved blocking TBDs.
+
+Elicit mode formalizes this behavior: it maps each blocking gap to a selection or open question, asks dependent questions sequentially, records the effect of every answer on stable IDs or loop edges, and ends with a confirmed/deferred decision ledger. It is interactive through the host conversation rather than a separate form UI.
 
 ## Version and status model
 
@@ -193,7 +243,7 @@ The validator checks frontmatter, lifecycle values, required sections, entry met
 
 ## Requirements fulfillment
 
-The original six core requirements are fulfilled at the Skill-and-Git workflow level: generation, entry-specific classifications, semantic versioning, shared progress and attribution, interactive elicitation, and iterative change tracking. The [requirements fulfillment audit](docs/requirements-fulfillment.md) maps each requirement to repository evidence and distinguishes the implemented Git/Codex workflow from optional real-time collaboration infrastructure.
+The original six core requirements are fulfilled within the documented Git/Codex collaboration model: generation, entry-specific classifications, semantic versioning, shared progress and attribution, interactive Elicitation, iterative change tracking, and near-real-time update discovery. The [requirements fulfillment audit](docs/requirements-fulfillment.md) maps each claim to repository evidence. Character-by-character co-editing and team-channel push are intentionally conditional capabilities because they require an active watcher or an administrator-configured GitHub integration.
 
 ## Design boundaries
 
