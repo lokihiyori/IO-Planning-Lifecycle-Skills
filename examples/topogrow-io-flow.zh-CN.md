@@ -224,9 +224,13 @@ translations:
 
 以上详细链路是权威定义。以下图表仅提供便于评审的紧凑路由投影，不增加任何服务或决策。
 
+![Topogrow IO Flow — EP-01、EP-02 与 EP-03 静态路由图](assets/topogrow-flow-visualizations.zh-CN.svg)
+
+以上 SVG 是可跨环境直接显示的版本。下方源码仍可编辑，也可以复制到 Mermaid Live Editor 中打开。
+
 ### 可视化 — `EP-01` 请求路由
 
-```mermaid
+```mermaid-source
 flowchart LR
     textInput[/"文本或语音输入"/]
     classifyRequest{"请求分级"}
@@ -254,7 +258,7 @@ flowchart LR
 
 ### 可视化 — `EP-02` 上传路由
 
-```mermaid
+```mermaid-source
 flowchart LR
     fileInput[/"多媒体上传"/]
     validateFile["验证并提取"]
@@ -275,7 +279,7 @@ flowchart LR
 
 ### 可视化 — `EP-03` 未完整路由
 
-```mermaid
+```mermaid-source
 flowchart LR
     formInput[/"结构化表单提交"/]
     unresolvedRoute{"TBD：分级与服务待定义"}

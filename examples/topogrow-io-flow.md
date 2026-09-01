@@ -223,9 +223,13 @@ Structured Form Submission → [TBD: Define validation, routing, execution, and 
 
 The detailed loops above are authoritative. These diagrams provide a compact routing projection for review and do not add services or decisions.
 
+![Topogrow IO Flow — EP-01, EP-02, and EP-03 static routing diagrams](assets/topogrow-flow-visualizations.svg)
+
+The SVG above is the portable display version. The source blocks below remain editable and can be opened in Mermaid Live Editor.
+
 ### Visualization — `EP-01` request routing
 
-```mermaid
+```mermaid-source
 flowchart LR
     textInput[/"Text or voice input"/]
     classifyRequest{"Classify request"}
@@ -253,7 +257,7 @@ flowchart LR
 
 ### Visualization — `EP-02` upload routing
 
-```mermaid
+```mermaid-source
 flowchart LR
     fileInput[/"Multimedia upload"/]
     validateFile["Validate and extract"]
@@ -274,7 +278,7 @@ flowchart LR
 
 ### Visualization — `EP-03` incomplete routing
 
-```mermaid
+```mermaid-source
 flowchart LR
     formInput[/"Structured form submission"/]
     unresolvedRoute{"TBD: classification and services"}
