@@ -66,7 +66,9 @@ Detailed loops above are authoritative. This diagram is their review-oriented pr
 
 `EP-01`
 
-```mermaid
+![{{product_or_capability}} EP-01 routing diagram](assets/{{stable_slug}}-ep-01-routing.svg)
+
+```mermaid-source
 flowchart LR
     entryInput[/{{short_input_label}}/]
     classify{Classify request}
