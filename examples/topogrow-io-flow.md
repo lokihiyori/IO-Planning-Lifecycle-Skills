@@ -1,14 +1,18 @@
 ---
 title: "Topogrow IO Flow"
 document_id: "io-flow-topogrow"
-version: "0.1.0"
+version: "0.1.1"
 status: "draft"
+language: "en"
 owners:
   - "unspecified"
 last_updated: "2026-09-01"
 last_updated_by: "Codex"
 source_refs:
   - "Topogrow-IO Flow.md (provided source, 2026-08)"
+  - "IO Flow visualization and translation enhancement request (2026-09-01)"
+translations:
+  - "./topogrow-io-flow.zh-CN.md"
 ---
 
 # Topogrow — IO Flow Specification
@@ -215,6 +219,70 @@ File Upload → File Validation Service → Content Extraction Service → Knowl
 
 Structured Form Submission → [TBD: Define validation, routing, execution, and persistence services — engineering owner] → User / System Output
 
+## Flow Visualizations
+
+The detailed loops above are authoritative. These diagrams provide a compact routing projection for review and do not add services or decisions.
+
+### Visualization — `EP-01` request routing
+
+```mermaid
+flowchart LR
+    textInput[/"Text or voice input"/]
+    classifyRequest{"Classify request"}
+    typeA["Type A: Low cost"]
+    typeB["Type B: Medium cost"]
+    typeC["Type C: High cost"]
+    quickPath["Lookup and execution"]
+    contextPath["Contextual analysis"]
+    plannedPath["Planned multi-source workflow"]
+    conversationOutput[/"Conversational output"/]
+    artifactOutput[/"Structured artifact"/]
+    archiveStep["Archive"]
+    databaseUpdate[("Database update")]
+
+    textInput --> classifyRequest
+    classifyRequest --> typeA
+    classifyRequest --> typeB
+    classifyRequest --> typeC
+    typeA --> quickPath --> conversationOutput
+    typeB --> contextPath --> conversationOutput
+    typeC --> plannedPath --> artifactOutput --> archiveStep
+    conversationOutput --> databaseUpdate
+    archiveStep --> databaseUpdate
+```
+
+### Visualization — `EP-02` upload routing
+
+```mermaid
+flowchart LR
+    fileInput[/"Multimedia upload"/]
+    validateFile["Validate and extract"]
+    classifyFile{"Classify file request"}
+    typeA["Type A: Identify and archive"]
+    typeB["Type B: Contextual analysis"]
+    typeC["Type C: Artifact workflow"]
+    evidenceOutput[/"Stored evidence"/]
+    insightOutput[/"Conversational insight"/]
+    reportOutput[/"Structured artifact"/]
+    databaseUpdate[("Database update")]
+
+    fileInput --> validateFile --> classifyFile
+    classifyFile --> typeA --> evidenceOutput --> databaseUpdate
+    classifyFile --> typeB --> insightOutput --> databaseUpdate
+    classifyFile --> typeC --> reportOutput --> databaseUpdate
+```
+
+### Visualization — `EP-03` incomplete routing
+
+```mermaid
+flowchart LR
+    formInput[/"Structured form submission"/]
+    unresolvedRoute{"TBD: classification and services"}
+    systemOutput[/"User or system output"/]
+
+    formInput --> unresolvedRoute --> systemOutput
+```
+
 ## Open Decisions and Assumptions
 
 | ID | Entry / Type | Kind | Question or Assumption | Owner | Blocking | Target Date |
@@ -230,4 +298,5 @@ Structured Form Submission → [TBD: Define validation, routing, execution, and 
 
 | Version | Date | Author | Scope | Change | Rationale / Source |
 |---|---|---|---|---|---|
+| 0.1.1 | 2026-09-01 | Codex | visualization / localization | Added synchronized Mermaid routing views, language metadata, and the linked Simplified Chinese companion. | User-requested visualization and English/Chinese support |
 | 0.1.0 | 2026-09-01 | Codex | initial | Standardized the supplied Topogrow flow into the lifecycle schema; preserved incomplete EP-03 content as explicit TBDs. | Topogrow-IO Flow.md |
