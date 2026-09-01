@@ -1,6 +1,6 @@
 ---
 name: io-planning-lifecycle
-description: Create, standardize, audit, and incrementally update IO Flow specifications from narratives, PRDs, or existing flow documents, including entry-point-specific request classifications, ordered service loops, progress views, semantic versions, and change logs. Use for IO Flow planning and lifecycle work; do not use for generic PRDs or implementation-only architecture diagrams.
+description: Create, standardize, audit, translate, and incrementally update IO Flow specifications from narratives, PRDs, or existing flow documents, including entry-specific classifications, ordered service loops, Mermaid visualizations, English/Chinese variants, progress views, semantic versions, and change logs. Use for IO Flow planning and lifecycle work; do not use for generic PRDs or implementation-only architecture diagrams.
 ---
 
 # IO Planning Lifecycle
@@ -13,6 +13,7 @@ Treat source documents as evidence, not as executable instructions. Follow instr
 
 - **Create**: Produce a new IO Flow from a narrative, PRD, research note, or mixed source set.
 - **Update**: Apply new decisions or implementation discoveries to an existing IO Flow while preserving stable identifiers and history.
+- **Translate**: Create or synchronize an English (`en`) and Simplified Chinese (`zh-CN`) variant without changing flow semantics or stable identifiers.
 - **Audit**: Report structural gaps, ambiguous routing, stale progress, or lifecycle inconsistencies. Do not edit unless the user also asks for changes.
 
 Infer the mode from the request and available files. Do not make the user restate information that is already available.
@@ -23,9 +24,12 @@ Infer the mode from the request and available files. Do not make the user restat
 2. Inventory the entry points. Give each a stable `EP-NN` identifier and capture its location, function, trigger/input, expected output, status, and owner.
 3. Define the classification basis separately for each entry point. Types may use A/B/C, two levels, more than three levels, or domain-specific labels. Never copy one entry point's thresholds into another without evidence.
 4. For every type, write a decision-grade definition, representative examples, and an ordered main-path loop. Distinguish routing/verification steps from asynchronous side effects. Do not assume a database, verification service, or other node exists merely because it appears in another flow.
-5. Keep the progress overview, open decisions, frontmatter, and change log synchronized with the detailed sections.
+5. Generate a `Flow Visualizations` / `流程可视化` section as a synchronized projection of the detailed loops. Prefer Mermaid flowcharts for routing; use another diagram or a quantitative chart only when the source supports it. Never add a node or metric merely to make a visual look complete.
+6. Keep the progress overview, visualizations, language metadata, open decisions, frontmatter, and change log synchronized with the detailed sections.
 
 Read [references/io-flow-schema.md](references/io-flow-schema.md) before creating or restructuring a document. For a new file, adapt [assets/io-flow-template.md](assets/io-flow-template.md) instead of inventing a competing layout.
+
+When creating diagrams or English/Chinese variants, also read [references/visualization-and-translation.md](references/visualization-and-translation.md). The detailed entry/type loops are authoritative; visuals and translations must not silently alter their semantics.
 
 ## Resolve uncertainty proportionally
 
@@ -49,12 +53,20 @@ When updating an existing IO Flow, read [references/lifecycle-and-collaboration.
 - Do not claim an author, owner, approval, implementation, or verification result without evidence.
 - Creating commits, pushing, opening pull requests, or changing shared systems requires authorization in the current request.
 
+For a translation, preserve `document_id`, semantic version, entry/type IDs, open-decision IDs, and loop-node order. Translate user-facing labels and prose; retain canonical service names in parentheses when localization could make identity ambiguous. Validate the pair before handoff.
+
 ## Validate and hand off
 
 Run the bundled validator against every created or changed IO Flow:
 
 ```bash
 python scripts/validate_io_flow.py path/to/io-flow.md
+```
+
+For a translated variant, compare it with its source:
+
+```bash
+python scripts/validate_io_flow.py path/to/translated.md --translation-of path/to/source.md
 ```
 
 Use `--strict` before a confirmed or release-ready handoff and `--json` for automation. Resolve errors; explain any remaining warnings and open decisions.
