@@ -114,7 +114,7 @@ Type quality rules:
 
 ### 5. Flow Visualizations
 
-Include a `Flow Visualizations` or `流程可视化` section with at least one fenced Mermaid diagram. Every detailed `EP-NN` must be represented or explicitly marked as incomplete.
+Include a `Flow Visualizations` or `流程可视化` section with at least one Mermaid or `mermaid-source` block. For GitHub-hosted deliverables, also embed a repository-local static SVG or PNG so the visual remains available when Mermaid rich rendering is blocked. Every detailed `EP-NN` must be represented or explicitly marked as incomplete.
 
 - Treat the detailed loops as the source of truth and the visual as a derived projection.
 - Prefer a flowchart for request classification and ordered routing. Split dense flows instead of shrinking meaning into an unreadable diagram.

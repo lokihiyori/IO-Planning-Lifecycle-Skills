@@ -34,6 +34,18 @@ Mermaid requirements:
 - Keep `EP-NN`, Type labels, and unresolved decision IDs visible in surrounding text or labels for traceability.
 - Do not imply status through color alone. If styling is used, pair it with a readable label.
 
+## Portable static rendering
+
+For GitHub-hosted deliverables, prefer a repository-local SVG because GitHub's Mermaid rich renderer can be unavailable in embedded or restricted browsers.
+
+1. Keep the diagram source as the canonical editable visual projection.
+2. Export a semantically equivalent SVG, or PNG when SVG is not supported, into a nearby `assets/` directory.
+3. Embed the static image with a relative Markdown link before the source block and write meaningful alt text that names the represented entry points.
+4. Store editable source in a `mermaid-source` fence so GitHub displays it as code instead of invoking its rich renderer. Use a normal `mermaid` fence only when dynamic rendering is explicitly preferred and verified in the target environment.
+5. Re-export and review the image whenever nodes, edges, labels, language, or unresolved states change. Confirm that text is readable, arrows are unambiguous, and TBD states remain visually explicit.
+
+Do not reference a machine-local absolute path, data URL, temporary host, or session-bound URL. A static image is a delivery fallback, not a second source of truth.
+
 ## English and Simplified Chinese companions
 
 Use separate Markdown files for the two language variants. This keeps review diffs readable and lets teams link directly to their preferred language.
