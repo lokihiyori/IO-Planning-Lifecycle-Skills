@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1020" viewBox="0 0 1400 1020" role="img" aria-labelledby="title desc">
+  <title id="title">Topogrow IO Flow 流程可视化</title>
+  <desc id="desc">EP-01 请求路由、EP-02 上传路由及 EP-03 未完整路由的静态图。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#57606a"/></marker>
+    <style>
+      text{font-family:"Microsoft YaHei","Segoe UI",Arial,sans-serif}.bg{fill:#ffffff}.panel{fill:#f6f8fa;stroke:#d0d7de;stroke-width:2}.title{font-size:22px;font-weight:700;fill:#1f2328}.subtitle{font-size:14px;fill:#57606a}.node{fill:#ffffff;stroke:#0969da;stroke-width:2}.decision{fill:#fff8c5;stroke:#9a6700;stroke-width:2}.output{fill:#dafbe1;stroke:#1a7f37;stroke-width:2}.pending{fill:#ffebe9;stroke:#cf222e;stroke-width:2;stroke-dasharray:7 5}.label{font-size:15px;fill:#1f2328;text-anchor:middle;dominant-baseline:middle}.small{font-size:14px}.edge{fill:none;stroke:#57606a;stroke-width:2;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect class="bg" width="1400" height="1020"/>
+
+  <rect class="panel" x="20" y="20" width="1360" height="430" rx="16"/>
+  <text class="title" x="48" y="58">EP-01 · 请求路由</text>
+  <text class="subtitle" x="48" y="83">按成本对文本或语音输入分级，再路由到对应的服务链路。</text>
+  <rect class="node" x="45" y="190" width="160" height="58" rx="29"/><text class="label" x="125" y="219">文本或语音输入</text>
+  <path class="decision" d="M300 159 L390 219 L300 279 L210 219 Z"/><text class="label" x="300" y="219">请求分级</text>
+  <rect class="node" x="425" y="108" width="180" height="54" rx="9"/><text class="label" x="515" y="135">Type A · 低成本</text>
+  <rect class="node" x="425" y="192" width="180" height="54" rx="9"/><text class="label" x="515" y="219">Type B · 中成本</text>
+  <rect class="node" x="425" y="276" width="180" height="54" rx="9"/><text class="label" x="515" y="303">Type C · 高成本</text>
+  <rect class="node" x="650" y="108" width="190" height="54" rx="9"/><text class="label" x="745" y="135">查询与执行</text>
+  <rect class="node" x="650" y="192" width="190" height="54" rx="9"/><text class="label" x="745" y="219">上下文分析</text>
+  <rect class="node" x="650" y="276" width="190" height="54" rx="9"/><text class="label small" x="745" y="295">规划式多来源</text><text class="label small" x="745" y="312">工作流</text>
+  <rect class="output" x="885" y="150" width="175" height="58" rx="29"/><text class="label" x="972.5" y="179">对话式输出</text>
+  <rect class="output" x="885" y="276" width="175" height="54" rx="9"/><text class="label" x="972.5" y="303">结构化制品</text>
+  <rect class="node" x="1095" y="276" width="110" height="54" rx="9"/><text class="label" x="1150" y="303">归档</text>
+  <rect class="output" x="1190" y="150" width="160" height="58" rx="29"/><text class="label" x="1270" y="179">数据库更新</text>
+  <path class="edge" d="M205 219 H210"/><path class="edge" d="M390 219 H410 V135 H425"/><path class="edge" d="M390 219 H425"/><path class="edge" d="M390 219 H410 V303 H425"/>
+  <path class="edge" d="M605 135 H650"/><path class="edge" d="M605 219 H650"/><path class="edge" d="M605 303 H650"/>
+  <path class="edge" d="M840 135 H860 V179 H885"/><path class="edge" d="M840 219 H860 V179 H885"/><path class="edge" d="M840 303 H885"/>
+  <path class="edge" d="M1060 179 H1190"/><path class="edge" d="M1060 303 H1095"/><path class="edge" d="M1205 303 H1270 V208"/>
+
+  <rect class="panel" x="20" y="470" width="1360" height="330" rx="16"/>
+  <text class="title" x="48" y="508">EP-02 · 上传路由</text>
+  <text class="subtitle" x="48" y="533">验证并提取多媒体内容，对请求分级，再持久化证据或输出结果。</text>
+  <rect class="node" x="45" y="615" width="155" height="58" rx="29"/><text class="label" x="122.5" y="644">多媒体上传</text>
+  <rect class="node" x="240" y="617" width="165" height="54" rx="9"/><text class="label" x="322.5" y="644">验证并提取</text>
+  <path class="decision" d="M500 589 L585 644 L500 699 L415 644 Z"/><text class="label small" x="500" y="644">文件请求分级</text>
+  <rect class="node" x="625" y="558" width="205" height="48" rx="9"/><text class="label small" x="727.5" y="582">Type A · 识别并归档</text>
+  <rect class="node" x="625" y="620" width="205" height="48" rx="9"/><text class="label small" x="727.5" y="644">Type B · 上下文分析</text>
+  <rect class="node" x="625" y="682" width="205" height="48" rx="9"/><text class="label small" x="727.5" y="706">Type C · 制品工作流</text>
+  <rect class="output" x="875" y="558" width="175" height="48" rx="24"/><text class="label" x="962.5" y="582">已存储证据</text>
+  <rect class="output" x="875" y="620" width="175" height="48" rx="24"/><text class="label" x="962.5" y="644">对话式洞察</text>
+  <rect class="output" x="875" y="682" width="175" height="48" rx="24"/><text class="label" x="962.5" y="706">结构化制品</text>
+  <rect class="output" x="1130" y="615" width="180" height="58" rx="29"/><text class="label" x="1220" y="644">数据库更新</text>
+  <path class="edge" d="M200 644 H240"/><path class="edge" d="M405 644 H415"/><path class="edge" d="M585 644 H605 V582 H625"/><path class="edge" d="M585 644 H625"/><path class="edge" d="M585 644 H605 V706 H625"/>
+  <path class="edge" d="M830 582 H875"/><path class="edge" d="M830 644 H875"/><path class="edge" d="M830 706 H875"/><path class="edge" d="M1050 582 H1090 V644 H1130"/><path class="edge" d="M1050 644 H1130"/><path class="edge" d="M1050 706 H1090 V644 H1130"/>
+
+  <rect class="panel" x="20" y="820" width="1360" height="180" rx="16"/>
+  <text class="title" x="48" y="858">EP-03 · 未完整路由</text>
+  <rect class="node" x="150" y="900" width="230" height="58" rx="29"/><text class="label" x="265" y="929">结构化表单提交</text>
+  <path class="pending" d="M665 883 L785 929 L665 975 L545 929 Z"/><text class="label small" x="665" y="922">TBD · 分级与服务</text><text class="label small" x="665" y="940">待定义</text>
+  <rect class="output" x="955" y="900" width="230" height="58" rx="29"/><text class="label" x="1070" y="929">用户或系统输出</text>
+  <path class="edge" d="M380 929 H545"/><path class="edge" d="M785 929 H955"/>
+</svg>
