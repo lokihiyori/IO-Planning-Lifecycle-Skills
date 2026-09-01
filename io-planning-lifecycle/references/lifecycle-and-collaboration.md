@@ -62,10 +62,13 @@ The document-level status must not hide less mature active content. Use the prog
 
 ## Concurrent and Git-based collaboration
 
+For remote revision detection, Sync/Watch modes, and notification boundaries, read [collaboration-and-notifications.md](collaboration-and-notifications.md). This section defines merge semantics; that reference defines how to discover that another contributor has changed the shared document.
+
 Before editing:
 
 - Read the current file and inspect local changes. Preserve unrelated uncommitted work.
 - If remote synchronization is authorized, compare with the remote state before publishing. Do not pull, rebase, reset, or overwrite merely to make the branch clean.
+- Record the remote head used to start the edit and verify it again immediately before publishing. A changed head invalidates a blind publish even when the local file still validates.
 - Reconcile entries and types by stable ID, not by heading order or text similarity alone.
 
 When two sources change different stable items, merge both and update the shared overview once. When they change the same item incompatibly, present a concise conflict containing the current value, proposed values, affected routing, and decision owner. Do not silently choose one side.
