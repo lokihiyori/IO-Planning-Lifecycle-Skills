@@ -141,6 +141,8 @@ Use $io-planning-lifecycle to add review-ready Mermaid diagrams and create a syn
 
 Every generated IO Flow includes a `Flow Visualizations` / `流程可视化` section. The detailed entry/type loops remain authoritative; diagrams are derived review views. The Skill defaults to Mermaid flowcharts for request classification and ordered service chains, splits dense diagrams, and renders unresolved entry points as explicit TBD nodes.
 
+For GitHub delivery, the Skill can export a repository-local SVG or PNG and embed it before the editable `mermaid-source` block. The static image displays even when GitHub's Mermaid rich renderer is unavailable in an embedded browser, while the source remains easy to revise or open in Mermaid Live Editor.
+
 Quantitative charts are generated only when the source provides authoritative values, units, and time boundaries. This prevents a visually polished chart from implying unsupported progress or performance data.
 
 English and Simplified Chinese variants use separate Markdown files with the same `document_id`, version, status, `EP-NN`/Type/`OD-NN` identifiers, and loop order. User-facing prose and diagram labels are translated; canonical service names can remain in parentheses when identity would otherwise be ambiguous.
