@@ -1,8 +1,32 @@
 # IO Planning Lifecycle Skill
 
+[![IO Flow validation](https://github.com/lokihiyori/IO-Planning-Lifecycle-Skills/actions/workflows/io-flow-validate.yml/badge.svg)](https://github.com/lokihiyori/IO-Planning-Lifecycle-Skills/actions/workflows/io-flow-validate.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 Create, review, visualize, translate, and evolve versioned IO Flow specifications from product narratives, PRDs, research notes, and existing flow documents.
 
 `io-planning-lifecycle` turns loosely structured product intent into a durable interaction and orchestration contract: stable entry-point IDs, entry-specific request classifications, ordered service loops, synchronized Mermaid diagrams, English/Simplified Chinese variants, progress visibility, explicit open decisions, semantic versions, and human-readable change history.
+
+## Table of contents
+
+- [Why this skill exists](#why-this-skill-exists)
+- [Capabilities](#capabilities)
+- [Output contract](#output-contract)
+- [Repository layout](#repository-layout)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Collaboration and update notifications](#collaboration-and-update-notifications)
+- [Flow visualization and translation](#flow-visualization-and-translation)
+- [How the Skill handles uncertainty](#how-the-skill-handles-uncertainty)
+- [Version and status model](#version-and-status-model)
+- [Validation](#validation)
+- [Included Topogrow example](#included-topogrow-example)
+- [Requirements fulfillment](#requirements-fulfillment)
+- [Design boundaries](#design-boundaries)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Why this skill exists
 
@@ -56,31 +80,57 @@ See [the normative schema](io-planning-lifecycle/references/io-flow-schema.md) f
 ```text
 .
 ├── README.md
+├── LICENSE
+├── .github/
+│   ├── pull_request_template.md
+│   └── workflows/
+│       └── io-flow-validate.yml      # CI: example validation, bilingual parity, unit tests
 ├── docs/
-│   └── requirements-fulfillment.md
+│   └── requirements-fulfillment.md   # Maps each original requirement to repository evidence
 ├── examples/
-│   ├── topogrow-io-flow.md
-│   └── topogrow-io-flow.zh-CN.md
-└── io-planning-lifecycle/
-    ├── SKILL.md
+│   ├── topogrow-io-flow.md           # English reference document
+│   ├── topogrow-io-flow.zh-CN.md     # Synchronized Simplified Chinese companion
+│   └── assets/
+│       ├── topogrow-flow-visualizations.svg
+│       └── topogrow-flow-visualizations.zh-CN.svg
+└── io-planning-lifecycle/            # ← the Skill package; install this folder, not the repo root
+    ├── SKILL.md                      # Entry point: modes, flow model, lifecycle rules
     ├── agents/
-    │   └── openai.yaml
+    │   └── openai.yaml               # Interface metadata for Codex-style hosts
     ├── assets/
-    │   └── io-flow-template.md
-    ├── references/
+    │   └── io-flow-template.md       # Layout to adapt for new documents
+    ├── references/                   # Loaded on demand per mode
     │   ├── collaboration-and-notifications.md
     │   ├── elicitation.md
     │   ├── io-flow-schema.md
     │   ├── lifecycle-and-collaboration.md
     │   └── visualization-and-translation.md
-    ├── scripts/
-    │   ├── check_io_flow_updates.py
-    │   └── validate_io_flow.py
+    ├── scripts/                      # Dependency-free CLIs
+    │   ├── check_io_flow_updates.py  # Remote revision / semantic drift detection
+    │   └── validate_io_flow.py       # Structure, lifecycle, and bilingual parity validator
     └── tests/
         └── test_check_io_flow_updates.py
 ```
 
 ## Installation
+
+Install the `io-planning-lifecycle` **folder**, not the repository root. The repository root additionally holds examples, docs, and CI that are not part of the Skill package.
+
+### Claude Code
+
+```bash
+git clone https://github.com/lokihiyori/IO-Planning-Lifecycle-Skills.git
+
+# project-level
+mkdir -p .claude/skills
+cp -R IO-Planning-Lifecycle-Skills/io-planning-lifecycle .claude/skills/
+
+# or user-level
+mkdir -p ~/.claude/skills
+cp -R IO-Planning-Lifecycle-Skills/io-planning-lifecycle ~/.claude/skills/
+```
+
+The Skill is then available as `io-planning-lifecycle`. Verify with `/skills`.
 
 ### Local Codex Skill
 
@@ -183,6 +233,31 @@ python io-planning-lifecycle/scripts/check_io_flow_updates.py \
   --watch-seconds 300
 ```
 
+#### Authentication
+
+The checker calls the GitHub REST API. It reads the **`GITHUB_TOKEN`** environment variable and sends it as a bearer token when present:
+
+```bash
+export GITHUB_TOKEN=ghp_...   # PowerShell: $env:GITHUB_TOKEN = "ghp_..."
+```
+
+A token is **required for private repositories** and strongly recommended otherwise: unauthenticated requests are limited to 60 per hour per IP, which a short watch cadence can exhaust. No token is written to disk or embedded in the baseline.
+
+#### Options
+
+| Flag | Default | Purpose |
+|---|---|---|
+| `--repo` | *required* | GitHub repository in `owner/name` form |
+| `--path` | *required* | Repository-relative IO Flow path |
+| `--ref` | `main` | Branch or ref to monitor |
+| `--state-file` | `.io-flow-sync/…` | Local JSON baseline path |
+| `--watch-seconds` | *off* | Repeat checks at this interval; **minimum 60**, 300 recommended |
+| `--timeout` | `15` | GitHub API request timeout in seconds |
+| `--json` | off | Emit machine-readable JSON |
+| `--no-record` | off | Check without updating the local baseline |
+
+Exit codes: `0` = no change detected, `2` = the remote revision changed. Use this in a CI or automation guard.
+
 The first check creates a gitignored baseline under `.io-flow-sync/`. A later change reports the contributor, commit, timestamp, old/new document versions, affected stable IDs, compare link, and unified diff. Watch mode only runs while its process or a configured Codex recurring automation is active. Team-wide Slack/Teams/email push requires the repository administrator to connect the chosen channel through a GitHub App or webhook; no destination or secret is assumed by this Skill.
 
 ## Flow visualization and translation
@@ -237,6 +312,10 @@ python io-planning-lifecycle/scripts/validate_io_flow.py examples/topogrow-io-fl
 
 The validator checks frontmatter, lifecycle values, required sections, entry metadata, per-entry classification bases, type definitions/examples/loops, Mermaid presence and entry coverage, progress coverage, change-log alignment, unresolved TBDs, and optional bilingual structural parity. It validates structure and lifecycle invariants; it does not prove product correctness, linguistic quality, implementation completeness, or privacy compliance.
 
+Exit codes: `0` when there are no errors, `1` when any error is reported. Under `--strict`, warnings are promoted to errors and therefore affect the exit code.
+
+> **Note on the bundled example.** `examples/topogrow-io-flow.md` validates cleanly (0 errors) but reports one warning: 10 unresolved TBD markers. That is intentional — the example deliberately leaves `EP-03` unresolved rather than inventing its function and loop. Running `--strict` against it therefore exits `1` by design. Use `--strict` on your own confirmed or release-ready documents, not on this example.
+
 ## Included Topogrow example
 
 [Topogrow IO Flow — English](examples/topogrow-io-flow.md) and [Topogrow IO Flow — 简体中文](examples/topogrow-io-flow.zh-CN.md) demonstrate synchronized bilingual output with Mermaid routing diagrams. The source fully defines conversational and multimedia entry points but stops after the location of a structured-form entry. Both variants therefore keep `EP-03` explicit and visualize it as unresolved instead of inventing its function, classification, examples, or loop.
@@ -251,12 +330,38 @@ Use this Skill for interaction and orchestration flow specifications. Do not rou
 
 Before publishing generated documents, review source references and examples for confidential or personally identifying information. Git commits, pushes, pull requests, and other shared-system changes remain separately authorized actions.
 
+## Development
+
+Both scripts require **Python 3.10 or later** and use only the standard library.
+
+Run the same three checks CI runs:
+
+```bash
+# 1. Validate the English example
+python io-planning-lifecycle/scripts/validate_io_flow.py examples/topogrow-io-flow.md
+
+# 2. Validate bilingual structural parity
+python io-planning-lifecycle/scripts/validate_io_flow.py \
+  examples/topogrow-io-flow.zh-CN.md \
+  --translation-of examples/topogrow-io-flow.md
+
+# 3. Run the collaboration-checker unit tests
+python -m unittest discover -s io-planning-lifecycle/tests
+```
+
+CI (`.github/workflows/io-flow-validate.yml`) runs all three on Python 3.12 for every push and pull request that touches `examples/**/*.md`, `io-planning-lifecycle/**`, or the workflow itself.
+
 ## Contributing
 
 Keep changes focused on observable IO Flow decisions:
 
 1. Preserve the progressive-disclosure structure: shared rules in `SKILL.md`, conditional detail in `references/`, and output material in `assets/`.
 2. Do not duplicate lifecycle rules across files.
-3. Add or update deterministic checks when a structural invariant changes.
-4. Run the Skill validator on affected examples and the Skill package validator before submitting changes.
-5. Explain behavioral changes and migration impact in the pull request.
+3. Add or update deterministic checks in `validate_io_flow.py` when a structural invariant changes, and cover checker behavior changes in `io-planning-lifecycle/tests/`.
+4. Run all three commands under [Development](#development) before submitting; they must pass exactly as CI runs them.
+5. If you change the schema or the template, update `references/io-flow-schema.md`, `assets/io-flow-template.md`, the validator, and this README together.
+6. Explain behavioral changes and migration impact in the pull request.
+
+## License
+
+Released under the [MIT License](LICENSE).
