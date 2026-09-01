@@ -1,8 +1,8 @@
 # IO Planning Lifecycle Skill
 
-Create, review, and evolve versioned IO Flow specifications from product narratives, PRDs, research notes, and existing flow documents.
+Create, review, visualize, translate, and evolve versioned IO Flow specifications from product narratives, PRDs, research notes, and existing flow documents.
 
-`io-planning-lifecycle` turns loosely structured product intent into a durable interaction and orchestration contract: stable entry-point IDs, entry-specific request classifications, ordered service loops, progress visibility, explicit open decisions, semantic versions, and human-readable change history.
+`io-planning-lifecycle` turns loosely structured product intent into a durable interaction and orchestration contract: stable entry-point IDs, entry-specific request classifications, ordered service loops, synchronized Mermaid diagrams, English/Simplified Chinese variants, progress visibility, explicit open decisions, semantic versions, and human-readable change history.
 
 ## Why this skill exists
 
@@ -15,11 +15,14 @@ IO Flow documents often begin as diagrams, chat notes, or isolated service lists
 - Give every entry point a stable `EP-NN` identifier.
 - Define classification rules independently per entry point; A/B/C is supported but not required.
 - Express each request type as a decision-grade definition, representative examples, and an ordered service loop.
+- Generate Mermaid flow visualizations from the authoritative loops without inventing missing services or metrics.
+- Create synchronized English (`en`) and Simplified Chinese (`zh-CN`) companion documents while preserving stable IDs and routing order.
 - Track draft, review, confirmation, implementation, and deprecation states.
 - Apply semantic versioning based on the highest-impact accepted change.
 - Preserve attribution, source references, open decisions, and a newest-first change log.
 - Audit a document without editing it.
 - Validate English or Chinese IO Flow documents with a dependency-free Python CLI.
+- Compare a translated document with its source and detect structural drift in entry points, types, loop length, open decisions, and diagram coverage.
 
 ## Output contract
 
@@ -38,19 +41,23 @@ Document metadata and lifecycle state
 │           ├── Definition
 │           ├── Examples
 │           └── Ordered loop
+├── Flow visualizations
 ├── Open decisions and assumptions
 └── Change log
 ```
 
-See [the normative schema](io-planning-lifecycle/references/io-flow-schema.md) for field-level requirements and [the lifecycle rules](io-planning-lifecycle/references/lifecycle-and-collaboration.md) for versioning, status, attribution, and collaboration behavior.
+See [the normative schema](io-planning-lifecycle/references/io-flow-schema.md) for field-level requirements, [the lifecycle rules](io-planning-lifecycle/references/lifecycle-and-collaboration.md) for versioning and collaboration, and [the visualization and translation rules](io-planning-lifecycle/references/visualization-and-translation.md) for Mermaid and bilingual parity requirements.
 
 ## Repository layout
 
 ```text
 .
 ├── README.md
+├── docs/
+│   └── requirements-fulfillment.md
 ├── examples/
-│   └── topogrow-io-flow.md
+│   ├── topogrow-io-flow.md
+│   └── topogrow-io-flow.zh-CN.md
 └── io-planning-lifecycle/
     ├── SKILL.md
     ├── agents/
@@ -59,7 +66,8 @@ See [the normative schema](io-planning-lifecycle/references/io-flow-schema.md) f
     │   └── io-flow-template.md
     ├── references/
     │   ├── io-flow-schema.md
-    │   └── lifecycle-and-collaboration.md
+    │   ├── lifecycle-and-collaboration.md
+    │   └── visualization-and-translation.md
     └── scripts/
         └── validate_io_flow.py
 ```
@@ -102,12 +110,13 @@ Invoke the Skill explicitly:
 Use $io-planning-lifecycle to turn this PRD into a draft IO Flow specification.
 ```
 
-The Skill supports three modes:
+The Skill supports four modes:
 
 | Mode | Use it when | Mutation behavior |
 |---|---|---|
 | Create | No lifecycle-ready IO Flow exists | Produces a new `0.1.0` draft unless another baseline is specified |
 | Update | New product decisions or implementation discoveries affect an existing flow | Preserves stable IDs, records the semantic delta, and increments the version |
+| Translate | You need an English or Simplified Chinese companion | Preserves semantic version, stable IDs, decisions, and loop order; validates structural parity |
 | Audit | You need a structural or lifecycle review | Reports findings without editing unless changes are also requested |
 
 Example prompts:
@@ -123,6 +132,18 @@ Use $io-planning-lifecycle to update EP-02 with this new verification step, reca
 ```text
 Use $io-planning-lifecycle to audit this document for overlapping type definitions, missing loop nodes, stale status, and lifecycle inconsistencies. Do not edit it.
 ```
+
+```text
+Use $io-planning-lifecycle to add review-ready Mermaid diagrams and create a synchronized Simplified Chinese companion for this English IO Flow.
+```
+
+## Flow visualization and translation
+
+Every generated IO Flow includes a `Flow Visualizations` / `流程可视化` section. The detailed entry/type loops remain authoritative; diagrams are derived review views. The Skill defaults to Mermaid flowcharts for request classification and ordered service chains, splits dense diagrams, and renders unresolved entry points as explicit TBD nodes.
+
+Quantitative charts are generated only when the source provides authoritative values, units, and time boundaries. This prevents a visually polished chart from implying unsupported progress or performance data.
+
+English and Simplified Chinese variants use separate Markdown files with the same `document_id`, version, status, `EP-NN`/Type/`OD-NN` identifiers, and loop order. User-facing prose and diagram labels are translated; canonical service names can remain in parentheses when identity would otherwise be ambiguous.
 
 ## How the Skill handles uncertainty
 
@@ -157,13 +178,20 @@ python io-planning-lifecycle/scripts/validate_io_flow.py path/to/io-flow.md --st
 
 # Emit machine-readable output
 python io-planning-lifecycle/scripts/validate_io_flow.py path/to/io-flow.md --json
+
+# Compare a Simplified Chinese companion with its English source
+python io-planning-lifecycle/scripts/validate_io_flow.py examples/topogrow-io-flow.zh-CN.md --translation-of examples/topogrow-io-flow.md
 ```
 
-The validator checks frontmatter, lifecycle values, required sections, entry metadata, per-entry classification bases, type definitions/examples/loops, progress coverage, change-log alignment, and unresolved TBDs. It validates structure and lifecycle invariants; it does not prove product correctness, implementation completeness, or privacy compliance.
+The validator checks frontmatter, lifecycle values, required sections, entry metadata, per-entry classification bases, type definitions/examples/loops, Mermaid presence and entry coverage, progress coverage, change-log alignment, unresolved TBDs, and optional bilingual structural parity. It validates structure and lifecycle invariants; it does not prove product correctness, linguistic quality, implementation completeness, or privacy compliance.
 
 ## Included Topogrow example
 
-[Topogrow IO Flow](examples/topogrow-io-flow.md) demonstrates how the Skill standardizes a real source document while preserving uncertainty. The source fully defines conversational and multimedia entry points but stops after the location of a structured-form entry. The generated draft therefore keeps `EP-03` explicit and records its missing function, classification, examples, and loop as open decisions instead of inventing them.
+[Topogrow IO Flow — English](examples/topogrow-io-flow.md) and [Topogrow IO Flow — 简体中文](examples/topogrow-io-flow.zh-CN.md) demonstrate synchronized bilingual output with Mermaid routing diagrams. The source fully defines conversational and multimedia entry points but stops after the location of a structured-form entry. Both variants therefore keep `EP-03` explicit and visualize it as unresolved instead of inventing its function, classification, examples, or loop.
+
+## Requirements fulfillment
+
+The original six core requirements are fulfilled at the Skill-and-Git workflow level: generation, entry-specific classifications, semantic versioning, shared progress and attribution, interactive elicitation, and iterative change tracking. The [requirements fulfillment audit](docs/requirements-fulfillment.md) maps each requirement to repository evidence and distinguishes the implemented Git/Codex workflow from optional real-time collaboration infrastructure.
 
 ## Design boundaries
 
