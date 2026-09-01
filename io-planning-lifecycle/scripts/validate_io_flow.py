@@ -14,11 +14,13 @@ from typing import Iterable
 
 
 ALLOWED_STATUSES = {"draft", "in_review", "confirmed", "implemented", "deprecated"}
+SUPPORTED_LANGUAGES = {"en", "zh-CN"}
 REQUIRED_FRONTMATTER = {
     "title",
     "document_id",
     "version",
     "status",
+    "language",
     "owners",
     "last_updated",
     "last_updated_by",
@@ -26,8 +28,10 @@ REQUIRED_FRONTMATTER = {
 }
 REQUIRED_SECTIONS = {
     "purpose": {"purpose and scope", "目的与范围", "范围与目标"},
+    "classification": {"classification defaults", "默认分级规则", "分级默认值"},
     "progress": {"progress overview", "进度总览"},
     "entries": {"entry points", "入口点"},
+    "visualizations": {"flow visualizations", "流程可视化"},
     "decisions": {"open decisions and assumptions", "待确认事项与假设", "开放问题与假设"},
     "changelog": {"change log", "changelog", "变更记录"},
 }
@@ -109,6 +113,11 @@ def validate_frontmatter(fields: dict[str, str]) -> list[Issue]:
     if status and status not in ALLOWED_STATUSES:
         allowed = ", ".join(sorted(ALLOWED_STATUSES))
         issues.append(Issue("error", "frontmatter.status", f"Status '{status}' is invalid; use one of: {allowed}.", 1))
+
+    language = fields.get("language", "")
+    if language and language not in SUPPORTED_LANGUAGES:
+        allowed = ", ".join(sorted(SUPPORTED_LANGUAGES))
+        issues.append(Issue("error", "frontmatter.language", f"Language '{language}' is invalid; use one of: {allowed}.", 1))
 
     updated = fields.get("last_updated", "")
     if updated:
@@ -199,6 +208,211 @@ def validate_entries(text: str, progress_start: int | None) -> list[Issue]:
     return issues
 
 
+def get_section_block(text: str, start: int) -> str:
+    next_section = re.search(r"(?m)^##\s+(?!#)", text[start + 3 :])
+    end = start + 3 + next_section.start() if next_section else len(text)
+    return text[start:end]
+
+
+def validate_visualizations(text: str, sections: dict[str, tuple[int, str]]) -> list[Issue]:
+    if "visualizations" not in sections:
+        return []
+
+    issues: list[Issue] = []
+    start = sections["visualizations"][0]
+    block = get_section_block(text, start)
+    mermaid_blocks = re.findall(r"(?ms)^```mermaid\s*\n(.*?)^```\s*$", block)
+    if not mermaid_blocks:
+        return [
+            Issue(
+                "error",
+                "visualization.mermaid_missing",
+                "Flow Visualizations must contain at least one fenced Mermaid diagram.",
+                line_number(text, start),
+            )
+        ]
+
+    supported = re.compile(r"^\s*(?:flowchart\s+(?:LR|RL|TB|TD)|sequenceDiagram|stateDiagram(?:-v2)?|erDiagram|gantt)\b")
+    for diagram in mermaid_blocks:
+        diagram_line = line_number(text, text.find(diagram, start))
+        if not supported.search(diagram):
+            issues.append(
+                Issue(
+                    "error",
+                    "visualization.type",
+                    "Mermaid diagram must use a supported flowchart, sequence, state, ER, or Gantt declaration.",
+                    diagram_line,
+                )
+            )
+        if "\\n" in diagram or re.search(r"<\/?[A-Za-z][^>]*>", diagram):
+            issues.append(
+                Issue(
+                    "error",
+                    "visualization.label_syntax",
+                    "Mermaid labels must not contain literal \\n escapes or HTML tags.",
+                    diagram_line,
+                )
+            )
+
+    entry_ids = [match.group(1) for match in re.finditer(r"(?m)^###\s+(EP-\d{2,})\b", text)]
+    for entry_id in entry_ids:
+        if not re.search(rf"(?<![A-Za-z0-9-]){re.escape(entry_id)}(?![A-Za-z0-9-])", block):
+            issues.append(
+                Issue(
+                    "error",
+                    "visualization.missing_entry",
+                    f"Flow Visualizations does not reference {entry_id}.",
+                    line_number(text, start),
+                )
+            )
+    return issues
+
+
+def extract_flow_structure(text: str) -> list[tuple[str, list[tuple[str, int]]]]:
+    structure: list[tuple[str, list[tuple[str, int]]]] = []
+    entry_matches = list(re.finditer(r"(?m)^###\s+(EP-\d{2,})\b[^\n]*$", text))
+    for index, entry_match in enumerate(entry_matches):
+        end = entry_matches[index + 1].start() if index + 1 < len(entry_matches) else len(text)
+        next_section = re.search(r"(?m)^##\s+(?!#)", text[entry_match.end() : end])
+        if next_section:
+            end = entry_match.end() + next_section.start()
+        entry_block = text[entry_match.start() : end]
+        type_matches = list(re.finditer(r"(?im)^####\s+(?:Type\s+|类型\s*)([A-Za-z0-9_-]+)\b[^\n]*$", entry_block))
+        types: list[tuple[str, int]] = []
+        for type_index, type_match in enumerate(type_matches):
+            type_end = type_matches[type_index + 1].start() if type_index + 1 < len(type_matches) else len(entry_block)
+            type_block = entry_block[type_match.start() : type_end]
+            loop_marker = find_marker(type_block, {"Loop", "处理链路", "服务链路"})
+            node_count = 0
+            if loop_marker:
+                loop_body = type_block[loop_marker.end() :]
+                next_marker = re.search(r"(?m)^\s*(?:\*\*[^*]+\*\*|#{1,6}\s+)", loop_body)
+                if next_marker:
+                    loop_body = loop_body[: next_marker.start()]
+                arrow = "→" if "→" in loop_body else "->" if "->" in loop_body else None
+                if arrow:
+                    node_count = len([node.strip() for node in loop_body.split(arrow) if node.strip()])
+            types.append((type_match.group(1), node_count))
+        structure.append((entry_match.group(1), types))
+    return structure
+
+
+def extract_decision_ids(text: str) -> list[str]:
+    return [match.group(1) for match in re.finditer(r"(?m)^\|\s*(OD-\d{2,})\s*\|", text)]
+
+
+def validate_translation(target_path: Path, source_path: Path) -> list[Issue]:
+    issues: list[Issue] = []
+    try:
+        target_text = target_path.read_text(encoding="utf-8-sig")
+        source_text = source_path.read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeError) as exc:
+        return [Issue("error", "translation.read", f"Cannot compare translation pair: {exc}")]
+
+    target_fields, _, _ = extract_frontmatter(target_text)
+    source_fields, _, _ = extract_frontmatter(source_text)
+
+    for key in ("document_id", "version", "status"):
+        if target_fields.get(key) != source_fields.get(key):
+            issues.append(
+                Issue(
+                    "error",
+                    f"translation.{key}",
+                    f"Translation and source must use the same {key}; got '{target_fields.get(key)}' and '{source_fields.get(key)}'.",
+                    1,
+                )
+            )
+
+    language_pair = {target_fields.get("language"), source_fields.get("language")}
+    if language_pair != SUPPORTED_LANGUAGES:
+        issues.append(
+            Issue(
+                "error",
+                "translation.language_pair",
+                "Translation comparison requires one 'en' document and one 'zh-CN' document.",
+                1,
+            )
+        )
+
+    translation_ref = target_fields.get("translation_of", "")
+    if not translation_ref:
+        issues.append(Issue("error", "translation.reference", "Translated document must define frontmatter 'translation_of'.", 1))
+    else:
+        resolved_ref = (target_path.parent / translation_ref).resolve()
+        if resolved_ref != source_path.resolve():
+            issues.append(
+                Issue(
+                    "error",
+                    "translation.reference",
+                    f"translation_of resolves to '{resolved_ref}', not the supplied source '{source_path.resolve()}'.",
+                    1,
+                )
+            )
+
+    target_structure = extract_flow_structure(target_text)
+    source_structure = extract_flow_structure(source_text)
+    target_entries = [entry_id for entry_id, _ in target_structure]
+    source_entries = [entry_id for entry_id, _ in source_structure]
+    if target_entries != source_entries:
+        issues.append(
+            Issue(
+                "error",
+                "translation.entry_structure",
+                f"Entry-point order differs; translation has {target_entries}, source has {source_entries}.",
+            )
+        )
+
+    target_map = dict(target_structure)
+    source_map = dict(source_structure)
+    for entry_id in sorted(target_map.keys() & source_map.keys()):
+        target_types = target_map[entry_id]
+        source_types = source_map[entry_id]
+        target_type_ids = [type_id for type_id, _ in target_types]
+        source_type_ids = [type_id for type_id, _ in source_types]
+        if target_type_ids != source_type_ids:
+            issues.append(
+                Issue(
+                    "error",
+                    "translation.type_structure",
+                    f"{entry_id} type order differs; translation has {target_type_ids}, source has {source_type_ids}.",
+                )
+            )
+        target_counts = dict(target_types)
+        source_counts = dict(source_types)
+        for type_id in sorted(target_counts.keys() & source_counts.keys()):
+            if target_counts[type_id] != source_counts[type_id]:
+                issues.append(
+                    Issue(
+                        "error",
+                        "translation.loop_structure",
+                        f"{entry_id} / Type {type_id} loop has {target_counts[type_id]} node(s) in the translation and {source_counts[type_id]} in the source.",
+                    )
+                )
+
+    target_decisions = extract_decision_ids(target_text)
+    source_decisions = extract_decision_ids(source_text)
+    if target_decisions != source_decisions:
+        issues.append(
+            Issue(
+                "error",
+                "translation.decision_structure",
+                f"Open-decision IDs differ; translation has {target_decisions}, source has {source_decisions}.",
+            )
+        )
+
+    target_diagrams = len(re.findall(r"(?m)^```mermaid\s*$", target_text))
+    source_diagrams = len(re.findall(r"(?m)^```mermaid\s*$", source_text))
+    if target_diagrams != source_diagrams:
+        issues.append(
+            Issue(
+                "error",
+                "translation.visualization_structure",
+                f"Mermaid diagram count differs; translation has {target_diagrams}, source has {source_diagrams}.",
+            )
+        )
+    return issues
+
+
 def validate_lifecycle(text: str, fields: dict[str, str], sections: dict[str, tuple[int, str]]) -> list[Issue]:
     issues: list[Issue] = []
     version = fields.get("version")
@@ -237,6 +451,7 @@ def validate(path: Path, strict: bool = False) -> list[Issue]:
     issues.extend(section_issues)
     progress_start = sections.get("progress", (None, ""))[0]
     issues.extend(validate_entries(text, progress_start))
+    issues.extend(validate_visualizations(text, sections))
     issues.extend(validate_lifecycle(text, fields, sections))
 
     if strict:
@@ -252,12 +467,29 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("document", type=Path, help="IO Flow Markdown file to validate")
     parser.add_argument("--strict", action="store_true", help="Treat warnings, including unresolved TBDs, as errors")
     parser.add_argument("--json", action="store_true", dest="as_json", help="Emit machine-readable JSON")
+    parser.add_argument(
+        "--translation-of",
+        type=Path,
+        help="Compare this document with its English or Simplified Chinese source",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
     issues = validate(args.document, strict=args.strict)
+    if args.translation_of:
+        source_issues = validate(args.translation_of, strict=args.strict)
+        issues.extend(
+            Issue(
+                issue.severity,
+                f"translation.source.{issue.code}",
+                f"Source '{args.translation_of}': {issue.message}",
+                issue.line,
+            )
+            for issue in source_issues
+        )
+        issues.extend(validate_translation(args.document, args.translation_of))
     errors = sum(issue.severity == "error" for issue in issues)
     warnings = sum(issue.severity == "warning" for issue in issues)
 
@@ -266,6 +498,7 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(
                 {
                     "path": str(args.document),
+                    "translation_of": str(args.translation_of) if args.translation_of else None,
                     "valid": errors == 0,
                     "errors": errors,
                     "warnings": warnings,
