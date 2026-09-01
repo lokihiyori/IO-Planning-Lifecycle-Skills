@@ -24,14 +24,14 @@ This conclusion does not claim that the repository is a standalone real-time col
 
 | Enhancement | Status | Evidence |
 |---|---|---|
-| Flow diagrams and charts | Fulfilled | Required `Flow Visualizations` / `流程可视化` section, Mermaid generation rules, entry coverage validation, and three Topogrow diagrams in each language |
+| Flow diagrams and charts | Fulfilled | Required `Flow Visualizations` / `流程可视化` section, Mermaid generation rules, portable SVG fallback guidance, entry coverage validation, and localized Topogrow static diagrams with editable source |
 | English / Simplified Chinese conversion | Fulfilled | Translate mode, language metadata, bilingual synchronization rules, paired Topogrow files, and `--translation-of` structural parity validation |
 
 ## Acceptance checks
 
 - Package metadata passes the Codex Skill validator.
 - English and Simplified Chinese examples pass the IO Flow structural validator in draft mode.
-- Pair validation confirms matching document/version/status metadata, entry and type order, loop-node counts, open-decision IDs, and Mermaid diagram counts.
+- Pair validation confirms matching document/version/status metadata, entry and type order, loop-node counts, open-decision IDs, and diagram-source counts.
 - Draft examples intentionally retain source gaps for `EP-03`; non-strict validation reports these as warnings. Strict validation must continue to fail until the responsible product and engineering owners resolve those TBDs.
 
 ## Final assessment
