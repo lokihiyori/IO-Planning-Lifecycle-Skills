@@ -1,0 +1,4 @@
+interface:
+  display_name: "IO Planning Lifecycle"
+  short_description: "Create and maintain versioned IO Flow specifications"
+  default_prompt: "Use $io-planning-lifecycle to turn these product requirements into a versioned IO Flow specification."
