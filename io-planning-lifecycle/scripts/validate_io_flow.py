@@ -221,16 +221,28 @@ def validate_visualizations(text: str, sections: dict[str, tuple[int, str]]) -> 
     issues: list[Issue] = []
     start = sections["visualizations"][0]
     block = get_section_block(text, start)
-    mermaid_blocks = re.findall(r"(?ms)^```mermaid\s*\n(.*?)^```\s*$", block)
+    mermaid_blocks = re.findall(r"(?ms)^```mermaid(?:-source)?\s*\n(.*?)^```\s*$", block)
     if not mermaid_blocks:
         return [
             Issue(
                 "error",
                 "visualization.mermaid_missing",
-                "Flow Visualizations must contain at least one fenced Mermaid diagram.",
+                "Flow Visualizations must contain at least one fenced Mermaid or mermaid-source diagram.",
                 line_number(text, start),
             )
         ]
+
+    portable_sources = re.findall(r"(?ms)^```mermaid-source\s*\n(.*?)^```\s*$", block)
+    static_images = re.findall(r"(?i)!\[[^\]]*\]\(([^)]+\.(?:svg|png))(?:\s+[^)]*)?\)", block)
+    if portable_sources and not static_images:
+        issues.append(
+            Issue(
+                "error",
+                "visualization.static_missing",
+                "A mermaid-source block requires an embedded repository-local SVG or PNG fallback.",
+                line_number(text, start),
+            )
+        )
 
     supported = re.compile(r"^\s*(?:flowchart\s+(?:LR|RL|TB|TD)|sequenceDiagram|stateDiagram(?:-v2)?|erDiagram|gantt)\b")
     for diagram in mermaid_blocks:
@@ -400,14 +412,24 @@ def validate_translation(target_path: Path, source_path: Path) -> list[Issue]:
             )
         )
 
-    target_diagrams = len(re.findall(r"(?m)^```mermaid\s*$", target_text))
-    source_diagrams = len(re.findall(r"(?m)^```mermaid\s*$", source_text))
+    target_diagrams = len(re.findall(r"(?m)^```mermaid(?:-source)?\s*$", target_text))
+    source_diagrams = len(re.findall(r"(?m)^```mermaid(?:-source)?\s*$", source_text))
     if target_diagrams != source_diagrams:
         issues.append(
             Issue(
                 "error",
                 "translation.visualization_structure",
                 f"Mermaid diagram count differs; translation has {target_diagrams}, source has {source_diagrams}.",
+            )
+        )
+    target_static_images = len(re.findall(r"(?i)!\[[^\]]*\]\([^)]+\.(?:svg|png)(?:\s+[^)]*)?\)", target_text))
+    source_static_images = len(re.findall(r"(?i)!\[[^\]]*\]\([^)]+\.(?:svg|png)(?:\s+[^)]*)?\)", source_text))
+    if target_static_images != source_static_images:
+        issues.append(
+            Issue(
+                "error",
+                "translation.static_visualization_structure",
+                f"Static visualization count differs; translation has {target_static_images}, source has {source_static_images}.",
             )
         )
     return issues
