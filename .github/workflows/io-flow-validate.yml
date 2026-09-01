@@ -1,0 +1,38 @@
+name: IO Flow validation
+
+on:
+  push:
+    paths:
+      - "examples/**/*.md"
+      - "io-planning-lifecycle/**"
+      - ".github/workflows/io-flow-validate.yml"
+  pull_request:
+    paths:
+      - "examples/**/*.md"
+      - "io-planning-lifecycle/**"
+      - ".github/workflows/io-flow-validate.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: io-flow-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate English example
+        run: python io-planning-lifecycle/scripts/validate_io_flow.py examples/topogrow-io-flow.md
+      - name: Validate bilingual parity
+        run: >-
+          python io-planning-lifecycle/scripts/validate_io_flow.py
+          examples/topogrow-io-flow.zh-CN.md
+          --translation-of examples/topogrow-io-flow.md
+      - name: Test collaboration update checker
+        run: python -m unittest discover -s io-planning-lifecycle/tests
