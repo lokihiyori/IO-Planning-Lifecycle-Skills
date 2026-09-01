@@ -3,12 +3,14 @@ title: "{{product_or_capability}} IO Flow"
 document_id: "io-flow-{{stable_slug}}"
 version: "0.1.0"
 status: "draft"
+language: "en"
 owners:
   - "unspecified"
 last_updated: "{{YYYY-MM-DD}}"
 last_updated_by: "unspecified"
 source_refs:
   - "{{source_reference}}"
+translations: []
 ---
 
 # {{product_or_capability}} — IO Flow Specification
@@ -57,6 +59,28 @@ Classification is defined per entry point unless an authoritative source establi
 **Loop**
 
 {{entry_or_input}} → {{interpretation_or_routing_service}} → {{execution_service}} → {{verification_or_output_service}} → {{user_or_system_output}}
+
+## Flow Visualizations
+
+Detailed loops above are authoritative. This diagram is their review-oriented projection.
+
+`EP-01`
+
+```mermaid
+flowchart LR
+    entryInput[/{{short_input_label}}/]
+    classify{Classify request}
+    typeA["Type A: {{type_label}}"]
+    execute[{{execution_service}}]
+    verify[{{verification_or_output_service}}]
+    result[/{{short_output_label}}/]
+
+    entryInput --> classify
+    classify --> typeA
+    typeA --> execute
+    execute --> verify
+    verify --> result
+```
 
 ## Open Decisions and Assumptions
 
