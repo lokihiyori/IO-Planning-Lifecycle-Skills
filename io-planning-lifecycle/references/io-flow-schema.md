@@ -21,12 +21,14 @@ title: "<product or capability> IO Flow"
 document_id: "io-flow-<stable-slug>"
 version: "0.1.0"
 status: "draft"
+language: "en"
 owners:
   - "unspecified"
 last_updated: "YYYY-MM-DD"
 last_updated_by: "unspecified"
 source_refs:
   - "<path, URL, issue, or source label>"
+translations: []
 ---
 ```
 
@@ -35,6 +37,8 @@ Rules:
 - `document_id` remains stable across title changes.
 - `version` is semantic and follows the lifecycle reference.
 - `status` is one of `draft`, `in_review`, `confirmed`, `implemented`, or `deprecated`.
+- `language` is `en` or `zh-CN`. English/Chinese companion files share the same `document_id`, version, stable IDs, and flow semantics.
+- A translated companion adds `translation_of: "<relative path to source>"`; either variant may list companion files under `translations`.
 - Use an explicit identity only when it is known. Use `unspecified` rather than guessing an author or owner.
 - `last_updated` describes the content update, not a validator run or formatting pass.
 - `source_refs` should be specific enough for another collaborator to find the basis for the flow. It may be an empty list only when no source is available.
@@ -108,7 +112,19 @@ Type quality rules:
 - Show a database update, queue, notification, analytics event, or other side effect only when evidence supports it. Label asynchronous branches explicitly rather than placing them ambiguously in the synchronous path.
 - Add optional branch/error notes or a step-detail table when the source contains meaningful alternate paths, failure handling, inputs/outputs, or verification gates. Do not fabricate them to make the document look complete.
 
-### 5. Open Decisions and Assumptions
+### 5. Flow Visualizations
+
+Include a `Flow Visualizations` or `流程可视化` section with at least one fenced Mermaid diagram. Every detailed `EP-NN` must be represented or explicitly marked as incomplete.
+
+- Treat the detailed loops as the source of truth and the visual as a derived projection.
+- Prefer a flowchart for request classification and ordered routing. Split dense flows instead of shrinking meaning into an unreadable diagram.
+- Use stable camelCase node IDs and short labels. Localize labels for the document language while preserving stable `EP-NN` and Type identifiers.
+- Show unresolved structure as an explicit TBD node or note; never infer a missing service, edge, or metric.
+- Generate quantitative charts only when authoritative numeric data, units, and time boundaries exist.
+
+Read [visualization-and-translation.md](visualization-and-translation.md) for rendering and bilingual synchronization rules.
+
+### 6. Open Decisions and Assumptions
 
 Use an actionable table:
 
@@ -118,7 +134,7 @@ Use an actionable table:
 
 Use stable `OD-NN` identifiers. Mark assumptions clearly and link resolved items to the version/change-log entry that resolved them rather than silently deleting their history.
 
-### 6. Change Log
+### 7. Change Log
 
 Use newest-first order:
 
@@ -135,6 +151,8 @@ Before handoff, verify:
 - Every progress row maps to one detailed `EP-NN` section and every detailed entry appears in the overview.
 - Every entry has location, function, classification basis, at least one type, status, and owner.
 - Every type has a decision-grade definition, examples, and an ordered loop.
+- The visualization section contains Mermaid and covers every entry point without contradicting the detailed loops.
 - Entry-specific thresholds override any team default explicitly.
 - Open decisions capture material uncertainty; confirmed or implemented sections have no unresolved blocking TBDs.
 - The document version, update date/byline, item states, and newest change-log row agree.
+- A translated companion has the same `document_id`, version, entry/type IDs, open-decision IDs, and loop-node order as its source.

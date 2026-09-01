@@ -31,6 +31,14 @@ Apply a material update as one coherent change set:
 
 The change-log row explains product meaning; Git history records file mechanics. Keep both when Git is available.
 
+## Visualization and translation lifecycle
+
+Visualizations are derived projections of the authoritative entry/type loops. Regenerating a visual after a semantic flow change is part of that change set and uses the same version bump. Correcting layout or localization without changing interpreted behavior does not independently bump the IO Flow version.
+
+English and Simplified Chinese companions share one semantic version. Update both variants in the same accepted change set when product meaning changes. A translation-only wording correction keeps the shared version when meaning is unchanged; record the edit in Git and, when useful to readers, in the change log without creating a duplicate current-version row.
+
+If a translation is behind its source, do not label the pair synchronized. Surface the structural mismatch and complete or explicitly defer the translation before a confirmed or implemented handoff.
+
 ## Status rules
 
 Allowed item and document statuses:
@@ -74,3 +82,4 @@ Commit, push, pull-request, issue, and shared-file operations are external mutat
 - Are overview counts, statuses, dates, authors, and open decisions synchronized?
 - Were same-item conflicts and deletions surfaced explicitly?
 - Does the validator pass at the strictness appropriate to the lifecycle status?
+- Are Mermaid projections and language companions synchronized with the authoritative loops and stable IDs?
